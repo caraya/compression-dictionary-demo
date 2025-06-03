@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>jQuery Brotli Dictionary Compression Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f0f4f8;
+      /* Light blue-gray background */
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: white;
+      border-radius: 0.5rem;
+      /* Tailwind's rounded-lg */
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      /* Tailwind's shadow-xl */
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      /* Tailwind's p-3 and p-4 equivalent */
+      border-bottom: 1px solid #e5e7eb;
+      /* Tailwind's divide-y divide-gray-200 */
+    }
+
+    th {
+      background-color: #f9fafb;
+      /* Tailwind's bg-gray-50 */
+      font-weight: 500;
+      /* Tailwind's font-medium */
+    }
+
+    td:nth-child(2) {
+      text-align: right;
+      font-family: monospace;
+    }
+
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .status-dot {
+      height: 10px;
+      width: 10px;
+      background-color: #bbb;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .status-dot.loaded {
+      background-color: #28a745;
+    }
+
+    /* Green for loaded */
+    .status-dot.error {
+      background-color: #dc3545;
+    }
+
+    /* Red for error */
+    button {
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+  <div class="container">
+    <h1 class="text-2xl font-bold mb-6 text-center text-gray-700">jQuery Compression Size Comparison</h1>
+
+    <p class="mb-4 text-gray-600">
+      This page demonstrates the effect of Brotli compression, with and without a shared dictionary,
+      on jQuery file sizes. The dictionary (`jquery.dict`) is created from jQuery 3.7.1.
+      The jQuery 4.0.0-beta loaded for the interactive test below should be served using dictionary compression if your
+      browser and Netlify are configured correctly.
+    </p>
+
+    <table class="min-w-full divide-y divide-gray-200 shadow-sm rounded-md overflow-hidden">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File Version</th>
+          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Size (Bytes)</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">jQuery 3.7.1 (uncompressed)</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right" id="size-jq371">
+            <div class="loader"></div>
+          </td>
+        </tr>
+        <tr>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">jQuery 4.0.0-beta (uncompressed)
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right" id="size-jq4beta">
+            <div class="loader"></div>
+          </td>
+        </tr>
+        <tr>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">jQuery 4.0.0-beta (Brotli, no
+            dictionary)</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right" id="size-jq4beta-br-nodict">
+            <div class="loader"></div>
+          </td>
+        </tr>
+        <tr>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">jQuery 4.0.0-beta (Brotli, with
+            dictionary from 3.7.1)</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right" id="size-jq4beta-br-dict">
+            <div class="loader"></div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="mt-8 p-6 border border-blue-200 rounded-lg bg-blue-50">
+      <h2 class="text-xl font-semibold mb-3 text-blue-700">jQuery Interaction Test</h2>
+      <p class="mb-3 text-blue-600">
+        Click the button below. If jQuery 4.0.0-beta (potentially dictionary-compressed) is loaded correctly, the text
+        will change.
+        <span id="jquery-status" class="ml-2"><span class="status-dot"></span>Pending...</span>
+      </p>
+      <button id="testButton"
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+        Click Me
+      </button>
+      <p id="testResult" class="mt-3 text-blue-700 font-medium"></p>
+    </div>
+
+    <p class="mt-6 text-xs text-gray-500 text-center">
+      Note: File sizes are fetched dynamically. Ensure all generated files (`jquery-3.7.1.js`, `jquery-4.0.0-beta.js`,
+      `jquery-4.0.0-beta.js.br`, `jquery-4.0.0-beta.js.no-dict.br`, and `jquery.dict`) are present in the `/js/`
+      directory on your Netlify site. The `_headers` file must also be correctly configured.
+    </p>
+  </div>
+
+  <!-- This script tag will load jQuery 4.0.0-beta.
+        Netlify should serve the dictionary-compressed version (jquery-4.0.0-beta.js.br)
+        if headers are correct and browser supports it. -->
+  <script src="/js/jquery-4.0.0-beta.js"></script>
+
+  <script>
+    async function fetchAndDisplaySize(url, elementId) {
+      const element = document.getElementById(elementId);
+      try {
+        const response = await fetch(url, { cache: 'no-store' }); // no-store to get fresh size
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status} for ${url}`);
+        }
+        const blob = await response.blob();
+        element.textContent = blob.size.toLocaleString() + ' B';
+      } catch (error) {
+        console.error('Error fetching size for', url, error);
+        element.textContent = 'Error';
+        element.classList.add('text-red-500');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchAndDisplaySize('/js/jquery-3.7.1.js', 'size-jq371');
+      fetchAndDisplaySize('/js/jquery-4.0.0-beta.js', 'size-jq4beta');
+      fetchAndDisplaySize('/js/jquery-4.0.0-beta.js.no-dict.br', 'size-jq4beta-br-nodict');
+      // This fetches the .br file that *should* be the dictionary compressed one.
+      // Its actual delivery mechanism when <script src="/js/jquery-4.0.0-beta.js"> is used
+      // depends on Netlify and browser negotiation. Here we fetch it directly for size.
+      fetchAndDisplaySize('/js/jquery-4.0.0-beta.js.br', 'size-jq4beta-br-dict');
+
+      // jQuery test
+      const statusElement = document.getElementById('jquery-status');
+      const statusDot = statusElement.querySelector('.status-dot');
+
+      if (typeof jQuery !== 'undefined') {
+        statusDot.classList.add('loaded');
+        statusElement.childNodes[ 1 ].nodeValue = ' jQuery successfully loaded!';
+        $('#testButton').on('click', function () {
+          $('#testResult').text('jQuery is working! Button clicked at ' + new Date().toLocaleTimeString());
+        });
+      } else {
+        statusDot.classList.add('error');
+        statusElement.childNodes[ 1 ].nodeValue = ' jQuery failed to load.';
+        console.error('jQuery is not loaded!');
+        document.getElementById('testButton').disabled = true;
+        document.getElementById('testButton').classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    });
+  </script>
+</body>
+
+</html>

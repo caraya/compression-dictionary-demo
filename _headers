@@ -1,0 +1,30 @@
+# Netlify _headers file
+
+# For the jQuery 4.0.0 Beta script that will use dictionary compression
+/js/jquery-4.0.0-beta.js
+  # Link to the dictionary file.
+  # When a browser requests /js/jquery-4.0.0-beta.js and supports Brotli (Accept-Encoding: br),
+  # Netlify will look for /js/jquery-4.0.0-beta.js.br.
+  # If found, and this Link header is present, Netlify serves the .br file and signals the browser
+  # to use the specified dictionary.
+  Link: </js/jquery.dict>; rel="dictionary"
+  # Ensure correct content type for JavaScript
+  Content-Type: application/javascript; charset=utf-8
+
+# For the dictionary file itself
+/js/jquery.dict
+  # Specify the content type for the dictionary
+  Content-Type: application/octet-stream # Some systems might use application/brotli-dictionary
+  # Dictionaries are ideal for long caching
+  Cache-Control: public, max-age=31536000, immutable
+
+# For fetching the non-dictionary brotli compressed file for size comparison in the HTML
+# This ensures the browser knows it's brotli encoded when we fetch it directly by its .br extension.
+/js/jquery-4.0.0-beta.js.no-dict.br
+  Content-Encoding: br
+  Content-Type: application/javascript; charset=utf-8
+
+# Optional: If you also want to serve jquery-3.7.1.js or jquery-4.0.0-beta.js (uncompressed)
+# with a specific content type, you can add rules for them too, though Netlify usually handles JS correctly.
+# /js/jquery-3.7.1.js
+#   Content-Type: application/javascript; charset=utf-8
